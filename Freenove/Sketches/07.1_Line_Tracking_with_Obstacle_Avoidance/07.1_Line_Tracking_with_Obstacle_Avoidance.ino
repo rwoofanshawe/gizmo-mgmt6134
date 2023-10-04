@@ -33,7 +33,6 @@ void loop()
 
     Serial.print("Distance: " + String(DetectObstacle()) + "\n");
 
-
   switch (sensorValue[3])
   {
     case 2:   //010
