@@ -58,7 +58,7 @@ void saveWater(int delay_ms);                    //save water
 void showEmotion(int mode);                      //Random emoticons  
 
 
-
+int DetectObstacle(void);
 
 
 
