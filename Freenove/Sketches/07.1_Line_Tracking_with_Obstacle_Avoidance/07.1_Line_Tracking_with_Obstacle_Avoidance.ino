@@ -19,20 +19,27 @@ void setup()
   Serial.begin(115200);//Open the serial port and set the baud rate to 115200
   PCA9685_Setup(); //Motor drive initialization
   Ultrasonic_Setup();//Initialize the ultrasonic module
-  Servo_1_Angle(90);   //Set the initial value of Servo 1 to 90 degrees
+ // Servo_1_Angle(90);   //Set the initial value of Servo 1 to 90 degrees
   Servo_2_Angle(90);   //Set the initial value of Servo 2 to 90 degrees
   Emotion_Setup();
 }
 
 void loop()
 {
+  
   Track_Read();
-        Servo_2_Angle(90);  
+        //Servo_2_Angle(90);  
         Servo_1_Angle(90);
-        delay(10);
-
-    Serial.print("Distance: " + String(DetectObstacle()) + "\n");
-
+        delay(500); 
+        DetectObstacle();
+    Serial.print("Obstacle: " + String(DetectObstacle()) + "\n");
+    if (DetectObstacle()==1)
+      {
+      ScanObstacle();
+      Serial.print("Direction: " + String(ScanObstacle()) + "\n");
+      }
+    else
+    {
   switch (sensorValue[3])
   {
     case 2:   //010
@@ -43,7 +50,7 @@ void loop()
       break;
     case 0:   //000
       eyesBlink1(100);
-      Motor_Move(0, 0, 0, 0);                                    //Stop
+      Motor_Move(0, 0, 0, 0);                                  //Stop
       break;
     case 4:   //100
     case 6:   //110
@@ -60,6 +67,7 @@ void loop()
     case 8: 
       Motor_Move(-SPEED_LV1, -SPEED_LV1, -SPEED_LV1, -SPEED_LV1);  //Move Backward
       break;
+  }
   }
 }
 

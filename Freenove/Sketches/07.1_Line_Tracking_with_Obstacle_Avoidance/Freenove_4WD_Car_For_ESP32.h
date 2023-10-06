@@ -59,7 +59,7 @@ void showEmotion(int mode);                      //Random emoticons
 
 
 int DetectObstacle(void);
-
+int ScanObstacle(void);
 
 
 #endif
