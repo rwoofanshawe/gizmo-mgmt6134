@@ -26,17 +26,12 @@ void setup()
 
 void loop()
 {
-  
   Track_Read();
         //Servo_2_Angle(90);  
         Servo_1_Angle(90);
-        delay(500); 
-        DetectObstacle();
-    Serial.print("Obstacle: " + String(DetectObstacle()) + "\n");
     if (DetectObstacle()==1)
       {
-      ScanObstacle();
-      Serial.print("Direction: " + String(ScanObstacle()) + "\n");
+      Direction(ScanObstacle());
       }
     else
     {
@@ -55,12 +50,12 @@ void loop()
     case 4:   //100
     case 6:   //110
       wheel(2, 100);
-      Motor_Move(SPEED_LV4, SPEED_LV4 , - SPEED_LV4, -SPEED_LV4);//Turn Right
+      Motor_Move(SPEED_LV1, SPEED_LV1 , - SPEED_LV1, -SPEED_LV1);//Turn Right
       break;
     case 1:   //001
     case 3:   //011
       wheel(1, 100);
-      Motor_Move(-SPEED_LV4, -SPEED_LV4, SPEED_LV4, SPEED_LV4);  //Turn Left
+      Motor_Move(-SPEED_LV1, -SPEED_LV1, SPEED_LV1, SPEED_LV1);  //Turn Left
       break;
     default:
       break;

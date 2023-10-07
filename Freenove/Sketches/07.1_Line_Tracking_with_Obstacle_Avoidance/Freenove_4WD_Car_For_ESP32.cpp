@@ -268,17 +268,18 @@ float Get_Sonar(void)
 
 int DetectObstacle(void)
 {
-  int Obstacle;
-  if ((Get_Sonar() < 20) && (sensorValue[3] > 0))
+  int Obstacle=0;
+  if ((Get_Sonar() < 40) && (sensorValue[3] > 0))
     {
-    delay(500);
+    delay(100);
     Obstacle=1; 
     }
   else
     {
-    delay(500);
+    delay(100);
     Obstacle=0;
     }
+  Serial.print("Obstacle: " + String(Obstacle) + "\n");
   return Obstacle;
 }
 
@@ -286,88 +287,99 @@ int ScanObstacle(void)
 {
   float Distance[180];
   int Direction=0;
-  eyesBlink1(100);
-  Motor_Move(0, 0, 0, 0);                                    //Stop
+    if (Get_Sonar() < 20)
+      {
+      delay(100);
+      showArrow(2, 100);
+      Motor_Move(-1000, -1000, -1000, -1000);  //Move Backward
+      delay(500);
+      }
+  eyesBlink(100);
+  Motor_Move(0, 0, 0, 0); 
   //Servo_2_Angle(90);  
-  delay(500);
+  delay(100);
 
   Servo_1_Angle(0);
     delay(500); 
-    Serial.print("Distance 0: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[0]=Get_Sonar();
-    Serial.print("Distance 0: " + String(Distance[0]) + "\n");
     eyesRotate(100);
 
   Servo_1_Angle(20);
     delay(500);
-    Serial.print("Distance 20: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[20]=Get_Sonar();
-    Serial.print("Distance 20: " + String(Distance[20]) + "\n");
     eyesRotate(100);
 
   Servo_1_Angle(45);
     delay(500);
-    Serial.print("Distance 45: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[45]=Get_Sonar();
-    Serial.print("Distance 45: " + String(Distance[45]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(65);
     delay(500);
-    Serial.print("Distance 65: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[65]=Get_Sonar();
-    Serial.print("Distance 65: " + String(Distance[65]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(90);
     delay(500);
-    Serial.print("Distance 90: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[90]=Get_Sonar();
-    Serial.print("Distance 90: " + String(Distance[90]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(115);
     delay(500);
-    Serial.print("Distance 115: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[115]=Get_Sonar();
-    Serial.print("Distance 115: " + String(Distance[115]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(135);
     delay(500);
-    Serial.print("Distance 135: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[135]=Get_Sonar();
-    Serial.print("Distance 135: " + String(Distance[135]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(156);
     delay(500);
-    Serial.print("Distance 156: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[156]=Get_Sonar();
-    Serial.print("Distance 156: " + String(Distance[156]) + "\n");
   eyesRotate(100);
 
   Servo_1_Angle(176);
     delay(500);
-    Serial.print("Distance 176: " + String(Get_Sonar()) + "\n");
-    delay(500);
     Distance[176]=Get_Sonar();
-    Serial.print("Distance 176: " + String(Distance[176]) + "\n");
   eyesRotate(100);
 
-  if ((Distance[20] > Distance[156]) || (Distance[45] > Distance[135]) || (Distance[65] > Distance[115]))
-   Direction = 1;
-  else if ((Distance[20] < Distance[156]) || (Distance[45] < Distance[135]) || (Distance[65] < Distance[115]))
+  Servo_1_Angle(90);
+    delay(100);
+
+  if (Distance[65] < Distance[115])
+     Direction = 1;
+  else if (Distance[65] > Distance[115])
    Direction = 2;
-   return Direction;
+  Serial.print("Direction: " + String(Direction) + "\n");
+  return Direction;
+}
+
+void Direction(int turn)
+{
+  int leftmotor[3];
+  int rightmotor[3];
+  int oppositeleftmotor[3];
+  int oppositerightmotor[3];
+  int angle[3];
+  int motor[5];
+
+  leftmotor[1]=2500;
+  rightmotor[1]=-2500;
+  leftmotor[2]=-2500;
+  rightmotor[2]=2500;
+
+  angle[1]=176;
+  angle[2]=0;
+
+  motor[1]=leftmotor[turn];
+  motor[2]=leftmotor[turn];
+  motor[3]=rightmotor[turn];
+  motor[4]=rightmotor[turn];
+
+  carMove(turn, 100);
+  Motor_Move(motor[1], motor[2], motor[3], motor[4]);
+  delay(500);
 }
 
 /////////////////////PCF8574 drive area//////////////////////////////
