@@ -60,7 +60,10 @@ void showEmotion(int mode);                      //Random emoticons
 
 int DetectObstacle(void);
 int ScanObstacle(void);
-void Direction(int turn);
+void get_distance(int car_mode);
+void DirectionTurn(int turn);
+void AroundObstacle1(void);
+void AroundObstacle2(void);
 
 
 #endif
