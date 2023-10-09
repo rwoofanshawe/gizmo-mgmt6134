@@ -42,7 +42,7 @@ void Track_Setup(void);                //Trace module initialization
 void Track_Read(void);                 //Tracking module reading
 
 
-//////////////////////Emotion drive area////////////////////////////////
+//////////////////////Emotion drive area////////////////////////////////LedLights
 
 void Emotion_Setup();                            //Initialize
 void eyesRotate(int delay_ms);                   //Turn the eyes
@@ -62,8 +62,9 @@ int DetectObstacle(void);
 int ScanObstacle(void);
 void get_distance(int car_mode);
 void DirectionTurn(int turn);
-void AroundObstacle1(void);
-void AroundObstacle2(void);
+void AroundObstacle(void);
+int ScanDistance(void);
+void OppositeAroundObstacle(void);
 
 
 #endif

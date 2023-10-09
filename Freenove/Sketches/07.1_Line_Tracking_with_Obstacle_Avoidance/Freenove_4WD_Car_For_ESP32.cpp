@@ -266,13 +266,45 @@ float Get_Sonar(void)
   return distance; // return the distance value
 }
 
+int distance[4];     //Storage of ultrasonic data
+
+void get_distance(int car_mode)
+{
+  int add_angle=30;
+  if(car_mode==1)
+    add_angle=0;
+  else
+    add_angle=30;
+
+  Servo_2_Angle(90);  
+  Servo_1_Angle(120+add_angle);
+  delay(100);
+  distance[0] = Get_Sonar();//Get the data on the left
+
+  Servo_1_Angle(90);
+  delay(100);
+  distance[1] = Get_Sonar();//Get the data in the middle
+
+  Servo_1_Angle(60-add_angle);
+  delay(100);
+  distance[2] = Get_Sonar();//Get the data on the right
+
+  Servo_1_Angle(90);
+  delay(100);
+  distance[1] = Get_Sonar();//Get the data in the middle
+}
+
 int DetectObstacle(void)
 {
   int Obstacle=0;
-  if ((Get_Sonar() < 40) && (sensorValue[3] > 0))
+  if (sensorValue[3] > 0)
     {
-    delay(100);
-    Obstacle=1; 
+      get_distance(1);//Get multiple Angle distance data
+      if ((distance[0] < 40) || (distance[1] < 40) || (distance[2] < 40))
+        {
+        delay(100);
+        Obstacle=1; 
+        }
     }
   else
     {
@@ -285,101 +317,139 @@ int DetectObstacle(void)
 
 int ScanObstacle(void)
 {
-  float Distance[180];
   int Direction=0;
-    if (Get_Sonar() < 20)
-      {
-      delay(100);
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+
+  get_distance(1);                    //Get multiple Angle distance data
+ 
+  if (distance[1]<12)                 //The car got too close to the obstacle
+    {
+      delay(400);
+      do {                 
+      Serial.print("Distance<12: " + String(Get_Sonar()) + "\n");             
       showArrow(2, 100);
-      Motor_Move(-1000, -1000, -1000, -1000);  //Move Backward
-      delay(500);
-      }
-  eyesBlink(100);
-  Motor_Move(0, 0, 0, 0); 
-  //Servo_2_Angle(90);  
+      Motor_Move(-600, -600, -600, -600);
+      delay (100);
+      } while (Get_Sonar()<12);
+    }
+
+  if (distance[1]>12)               //The car got too far to the obstacle
+    {
+      delay(400);
+      do {                   
+      Serial.print("Distance>12: " + String(Get_Sonar()) + "\n");           
+      showArrow(1, 100);
+      Motor_Move(600, 600, 600, 600);
+      delay (100);
+      } while (Get_Sonar()>12);
+    }
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+  delay (1000);
+
+  if (distance[0] < distance[2])            //There is also an obstacle on the left
+    Direction = 1;                          //1 left turn
+  else if (distance[0] > distance[2])      //There is also an obstacle on the right
+    Direction = 2;                          //2 right turn
   delay(100);
-
-  Servo_1_Angle(0);
-    delay(500); 
-    Distance[0]=Get_Sonar();
-    eyesRotate(100);
-
-  Servo_1_Angle(20);
-    delay(500);
-    Distance[20]=Get_Sonar();
-    eyesRotate(100);
-
-  Servo_1_Angle(45);
-    delay(500);
-    Distance[45]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(65);
-    delay(500);
-    Distance[65]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(90);
-    delay(500);
-    Distance[90]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(115);
-    delay(500);
-    Distance[115]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(135);
-    delay(500);
-    Distance[135]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(156);
-    delay(500);
-    Distance[156]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(176);
-    delay(500);
-    Distance[176]=Get_Sonar();
-  eyesRotate(100);
-
-  Servo_1_Angle(90);
-    delay(100);
-
-  if (Distance[65] < Distance[115])
-     Direction = 1;
-  else if (Distance[65] > Distance[115])
-   Direction = 2;
+    
   Serial.print("Direction: " + String(Direction) + "\n");
   return Direction;
 }
 
-void Direction(int turn)
+int motor[5];
+int oppositemotor[5];
+
+void DirectionTurn(int turn)
 {
   int leftmotor[3];
   int rightmotor[3];
-  int oppositeleftmotor[3];
-  int oppositerightmotor[3];
   int angle[3];
-  int motor[5];
 
-  leftmotor[1]=2500;
-  rightmotor[1]=-2500;
-  leftmotor[2]=-2500;
-  rightmotor[2]=2500;
+  leftmotor[1]=1000;
+  rightmotor[1]=-1000;
+  leftmotor[2]=-1000;
+  rightmotor[2]=1000;
 
-  angle[1]=176;
-  angle[2]=0;
+  angle[1]=176;             // 0 is right
+  angle[2]=0;               // 176 is left
 
+  motor[0]=turn+2;
   motor[1]=leftmotor[turn];
   motor[2]=leftmotor[turn];
   motor[3]=rightmotor[turn];
   motor[4]=rightmotor[turn];
 
-  carMove(turn, 100);
-  Motor_Move(motor[1], motor[2], motor[3], motor[4]);
-  delay(500);
+  oppositemotor[1]=rightmotor[turn];
+  oppositemotor[2]=rightmotor[turn];
+  oppositemotor[3]=leftmotor[turn];
+  oppositemotor[4]=leftmotor[turn];
+
+  Servo_1_Angle(angle[turn]);
+  delay (1000);
+}
+
+void AroundObstacle(void)
+{
+    do {
+    Serial.print("DistanceAroundObstacle: " + String(Get_Sonar()) + "\n");
+    showArrow(motor[0], 100);
+    Motor_Move(motor[1], motor[2], motor[3], motor[4]);
+    delay (100);
+    } while (Get_Sonar()>30);
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+  delay (1000);
+
+    do {                   
+    Serial.print("Distance>12: " + String(Get_Sonar()) + "\n");           
+    showArrow(1, 100);
+    Motor_Move(600, 600, 600, 600);
+    delay (100);
+    } while ((Get_Sonar()<40) && (Get_Sonar()>20));
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+  delay (1000);
+}
+
+int ScanDistance(void)
+{
+  // if direction is 1 (left) far is right near is left
+  // if direction is 2 (right far is left near is right
+    if (Get_Sonar()<30)
+    AroundObstacle();
+    if (Get_Sonar()>30)
+    OppositeAroundObstacle();    
+}
+
+void OppositeAroundObstacle(void)
+{
+    do {
+    Serial.print("DistanceAroundObstacle: " + String(Get_Sonar()) + "\n");
+    showArrow(motor[0], 100);
+    Motor_Move(oppositemotor[1], oppositemotor[2], oppositemotor[3], oppositemotor[4]);
+    delay (100);
+    } while (Get_Sonar()>30);
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+  delay (1000);
+
+    do {                   
+    Serial.print("Distance>12: " + String(Get_Sonar()) + "\n");           
+    showArrow(1, 100);
+    Motor_Move(600, 600, 600, 600);
+    delay (100);
+    } while ((Get_Sonar()<40) && (Get_Sonar()>20));
+
+  eyesBlink1(100);
+  Motor_Move(0, 0, 0, 0);             //Stop the car to judge the situation
+  delay (1000);
 }
 
 /////////////////////PCF8574 drive area//////////////////////////////

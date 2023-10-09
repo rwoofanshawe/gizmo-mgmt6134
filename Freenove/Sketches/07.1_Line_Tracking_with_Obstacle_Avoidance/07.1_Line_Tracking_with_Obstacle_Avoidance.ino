@@ -19,7 +19,7 @@ void setup()
   Serial.begin(115200);//Open the serial port and set the baud rate to 115200
   PCA9685_Setup(); //Motor drive initialization
   Ultrasonic_Setup();//Initialize the ultrasonic module
- // Servo_1_Angle(90);   //Set the initial value of Servo 1 to 90 degrees
+  Servo_1_Angle(90);   //Set the initial value of Servo 1 to 90 degrees
   Servo_2_Angle(90);   //Set the initial value of Servo 2 to 90 degrees
   Emotion_Setup();
 }
@@ -27,14 +27,20 @@ void setup()
 void loop()
 {
   Track_Read();
-        //Servo_2_Angle(90);  
-        Servo_1_Angle(90);
+
     if (DetectObstacle()==1)
       {
-      Direction(ScanObstacle());
+      DirectionTurn(ScanObstacle());
+      AroundObstacle();
+      Track_Read();
+        do{
+          ScanDistance();
+          Track_Read();
+        } while (sensorValue[3] == 0);
       }
     else
     {
+
   switch (sensorValue[3])
   {
     case 2:   //010
@@ -50,12 +56,12 @@ void loop()
     case 4:   //100
     case 6:   //110
       wheel(2, 100);
-      Motor_Move(SPEED_LV1, SPEED_LV1 , - SPEED_LV1, -SPEED_LV1);//Turn Right
+      Motor_Move(SPEED_LV4, SPEED_LV4 , - SPEED_LV3, -SPEED_LV3);//Turn Right
       break;
     case 1:   //001
     case 3:   //011
       wheel(1, 100);
-      Motor_Move(-SPEED_LV1, -SPEED_LV1, SPEED_LV1, SPEED_LV1);  //Turn Left
+      Motor_Move(-SPEED_LV3, -SPEED_LV3, SPEED_LV4, SPEED_LV4);  //Turn Left
       break;
     default:
       break;
@@ -63,6 +69,8 @@ void loop()
       Motor_Move(-SPEED_LV1, -SPEED_LV1, -SPEED_LV1, -SPEED_LV1);  //Move Backward
       break;
   }
+  
   }
+
 }
 
