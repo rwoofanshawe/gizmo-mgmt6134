@@ -62,9 +62,13 @@ int DetectObstacle(void);
 int ScanObstacle(void);
 void get_distance(int car_mode);
 void DirectionTurn(int turn);
+void MoveForward(void);
+void ScanDistance(void);
 void AroundObstacle(void);
-int ScanDistance(void);
 void OppositeAroundObstacle(void);
+
+void OnTurnScan(void);
+void OnTurn(void);
 
 
 #endif

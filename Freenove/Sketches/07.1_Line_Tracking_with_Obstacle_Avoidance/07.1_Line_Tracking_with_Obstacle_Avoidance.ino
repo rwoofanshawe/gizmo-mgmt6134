@@ -31,7 +31,6 @@ void loop()
     if (DetectObstacle()==1)
       {
       DirectionTurn(ScanObstacle());
-      AroundObstacle();
       Track_Read();
         do{
           ScanDistance();
