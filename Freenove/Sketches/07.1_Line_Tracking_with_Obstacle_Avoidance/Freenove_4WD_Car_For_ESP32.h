@@ -58,17 +58,21 @@ void saveWater(int delay_ms);                    //save water
 void showEmotion(int mode);                      //Random emoticons  
 
 
-int DetectObstacle(void);
-int ScanObstacle(void);
-void get_distance(int car_mode);
-void DirectionTurn(int turn);
+void LineTracking(void);
+void ObstacleAvoidance(void);
+int ObstacleAhead(void);
+void SuitableDistance(void);
+int ObstacleLocation(void);
+void movement(int turn);
+void MoveAroundObstacle(void);
 void MoveForward(void);
-void ScanDistance(void);
-void AroundObstacle(void);
-void OppositeAroundObstacle(void);
+void MoveNearObstacle(void);
+void MoveFarObstacle(void);
+void ReturnTrack(void);
+void ForwardToZero(void);
+void TurnToTrack(void);
+void ForwardToTrack(void);
 
-void OnTurnScan(void);
-void OnTurn(void);
 
 
 #endif
