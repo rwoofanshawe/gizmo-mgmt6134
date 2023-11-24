@@ -4,13 +4,209 @@
 #include "Freenove_VK16K33_Lib_For_ESP32.h"
 #include <Wire.h>
 
+int ws2812_task_mode = 0;
+int ws2812_strip_time_now;
+int ws2812_strip_time_next;
+unsigned char ws2812_strip_color_1[12][3];
+unsigned char ws2812_strip_color_2[12][3];
+
+Freenove_ESP32_WS2812 ws2812_strip = Freenove_ESP32_WS2812(12, WS2812_PIN, 0, TYPE_GRB);
+
+//Set the display color1 for WS2812
+void WS2812_Set_Color_1(int number, unsigned char color_1, unsigned char color_2, unsigned char color_3)  //Set the display color1 for WS2812
+{
+  for (int i = 0; i < 12; i++)
+  {
+    if ((number >> i) & 0x01 == 0x01)
+    {
+      ws2812_strip_color_1[i][0] = constrain(color_1, 0, 255);
+      ws2812_strip_color_1[i][1] = constrain(color_2, 0, 255);
+      ws2812_strip_color_1[i][2] = constrain(color_3, 0, 255);
+    }
+  }
+}
+
+//Set the display color2 for WS2812
+void WS2812_Set_Color_2(int number, unsigned char color_1, unsigned char color_2, unsigned char color_3)  //Set the display color1 for WS2812
+{
+  if (number == 0)
+  {
+    for (int i = 0; i < 12; i++)
+    {
+      ws2812_strip_color_2[i][0] = constrain(color_1, 0, 255);
+      ws2812_strip_color_2[i][1] = constrain(color_2, 0, 255);
+      ws2812_strip_color_2[i][2] = constrain(color_3, 0, 255);
+    }
+  }
+  else if (number > 0 && number <= 12)
+  {
+    ws2812_strip_color_2[number - 1][0] = constrain(color_1, 0, 255);
+    ws2812_strip_color_2[number - 1][1] = constrain(color_2, 0, 255);
+    ws2812_strip_color_2[number - 1][2] = constrain(color_3, 0, 255);
+  }
+}
+
+//Close the display WS2812
+void ws2812_close(void)
+{
+  for (int i = 0; i < 12; i++)
+    ws2812_strip.setLedColorData(i, 0, 0, 0);
+  ws2812_strip.show();
+}
+
+int ws2812_following_number = 0;
+//WS2812 Flow display
+void ws2812_following(void)
+{
+  ws2812_strip_time_next = millis();
+  if (ws2812_strip_time_next - ws2812_strip_time_now > 100)
+  {
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    for (int i = 0; i < ws2812_following_number; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_1[i][0], ws2812_strip_color_1[i][1], ws2812_strip_color_1[i][2]);
+    for (int i = ws2812_following_number; i < 12; i++)
+      ws2812_strip.setLedColorData(i, 0, 0, 0);
+    ws2812_strip.show();
+    ws2812_following_number++;
+    if (ws2812_following_number == 13)
+      ws2812_following_number = 0;
+  }
+}
+
+void ws2812_rgb(void)
+{
+  ws2812_strip_time_next = millis();
+  if (ws2812_strip_time_next - ws2812_strip_time_now > 100)
+  {
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_1[i][0], ws2812_strip_color_1[i][1], ws2812_strip_color_1[i][2]);
+    ws2812_strip.show();
+  }
+}
+
+int ws2812_blink_flag = 0;
+//WS2812 blink display
+void ws2812_blink(void)
+{
+  ws2812_strip_time_next = millis();
+  if (ws2812_strip_time_next - ws2812_strip_time_now > 500 && ws2812_blink_flag == 0)
+  {
+    ws2812_blink_flag = 1;
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_1[i][0], ws2812_strip_color_1[i][1], ws2812_strip_color_1[i][2]);
+    ws2812_strip.show();
+  }
+  else if (ws2812_strip_time_next - ws2812_strip_time_now > 500 && ws2812_blink_flag == 1)
+  {
+    ws2812_blink_flag = 0;
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_2[i][0], ws2812_strip_color_2[i][1], ws2812_strip_color_2[i][2]);
+    ws2812_strip.show();
+  }
+}
+
+int ws2812_breathe_flag = 0;
+int breathe_brightness = 0;
+//WS2812 breathe display
+void ws2812_breathe(void)
+{
+  ws2812_strip_time_next = millis();
+  if ((ws2812_strip_time_next - ws2812_strip_time_now > 5) && (ws2812_breathe_flag == 0))
+  {
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    breathe_brightness++;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_1[i][0]*breathe_brightness / 255, ws2812_strip_color_1[i][1]*breathe_brightness / 255, ws2812_strip_color_1[i][2]*breathe_brightness / 255);
+    ws2812_strip.show();
+    if (breathe_brightness >= 255)
+      ws2812_breathe_flag = 1;
+  }
+  if ((ws2812_strip_time_next - ws2812_strip_time_now > 5) && (ws2812_breathe_flag == 1))
+  {
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    breathe_brightness--;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(i, ws2812_strip_color_1[i][0]*breathe_brightness / 255, ws2812_strip_color_1[i][1]*breathe_brightness / 255, ws2812_strip_color_1[i][2]*breathe_brightness / 255);
+    ws2812_strip.show();
+    if (breathe_brightness <= 0)
+      ws2812_breathe_flag = 0;
+  }
+}
+
+int rainbow_count = 0;
+//WS2812 rainbow display
+void ws2812_rainbow(void)
+{
+  ws2812_strip.setBrightness(20);
+  ws2812_strip_time_next = millis();
+  if (ws2812_strip_time_next - ws2812_strip_time_now > 5)
+  {
+    ws2812_strip_time_now = ws2812_strip_time_next;
+    rainbow_count++;
+    for (int i = 0; i < 12; i++)
+      ws2812_strip.setLedColorData(11 - i, ws2812_strip.Wheel((i * 256 / 12 + rainbow_count) & 255));
+    ws2812_strip.show();
+    if (rainbow_count > 255)
+      rainbow_count = 0;
+  }
+}
+
+//WS2812 initialization function
+void WS2812_Setup(void)
+{
+  ws2812_strip.begin();
+  ws2812_strip.setBrightness(50);
+  ws2812_close();
+  WS2812_Set_Color_1(4095, 0, 0, 100);
+  WS2812_Set_Color_2(4095, 0, 0, 0);
+  ws2812_strip_time_now = millis();
+
+}
+
+//WS2812 set mode
+void WS2812_SetMode(int mode)
+{
+  ws2812_task_mode = constrain(mode, 0, 5);
+}
+
+//WS2812 non-blocking display function
+void WS2812_Show(int mode)
+{
+  switch (mode)
+  {
+    case 0://Close the WS2812
+      ws2812_close();
+      break;
+    case 1:
+      ws2812_rgb();
+      break;
+    case 2:
+      ws2812_following();
+      break;
+    case 3:
+      ws2812_blink();
+      break;
+    case 4:
+      ws2812_breathe();
+      break;
+    case 5:
+      ws2812_rainbow();
+      break;
+    default:
+      break;
+  }
+}
+
 /////////////////////PCA9685 drive area///////////////////////////////////
 #define PCA9685_SDA 13         //Define SDA pins
 #define PCA9685_SCL 14         //Define SCL pins
 #ifndef PCA9685_ADDRESS
 #define PCA9685_ADDRESS   0x5F
 #endif
-#define FREQUENCY          1000      //Define the operating frequency of servo
+#define FREQUENCY          50      //Define the operating frequency of servo
 #define PCA9685_CHANNEL_0  0         //Define PCA9685 channel to control servo 1
 #define PCA9685_CHANNEL_1  1         //Define the PCA9685 channel to control servo 2
 #define SERVO_MIDDLE_POINT 1500      //Define the middle position of the servo   
@@ -30,13 +226,13 @@ PCA9685 pca9685;//Instantiate a PCA9685 object
 //PCA9685 initialization
 void PCA9685_Setup(void)
 {
-  Wire.begin(PCA9685_SDA, PCA9685_SCL);  
-  
+  Wire.begin(PCA9685_SDA, PCA9685_SCL);
+
   Wire.beginTransmission(PCA9685_ADDRESS);
   Wire.write(0x00);
   Wire.write(0x00);
   Wire.endTransmission();
-  
+
   pca9685.setupSingleDevice(Wire, PCA9685_ADDRESS);
   pca9685.setToFrequency(FREQUENCY);
 }
@@ -152,7 +348,7 @@ void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
 
 
 //////////////////////Buzzer drive area///////////////////////////////////
-//Buzzer pin definition             
+//Buzzer pin definition
 #define PIN_BUZZER 2                    //Define the pins for the ESP32 control buzzer
 #define BUZZER_CHN 0                    //Define the PWM channel for ESP32
 #define BUZZER_FREQUENCY 2000           //Define the resonant frequency of the buzzer 
@@ -190,7 +386,7 @@ void Buzzer_Alert(int beat, int rebeat)
 #define PIN_BATTERY        32        //Set the battery detection voltage pin
 #define LOW_VOLTAGE_VALUE  2100      //Set the minimum battery voltage
 
-float batteryVoltage = 0;       //Battery voltage variable
+float batteryVoltage = 0;       //Batteryws2812_close voltage variable
 float batteryCoefficient = 3.4;   //Set the proportional coefficient
 
 //Gets the battery ADC value
@@ -251,7 +447,7 @@ void Ultrasonic_Setup(void)
 }
 
 //Obtain ultrasonic distance data
-float Get_Sonar(void) 
+float Get_Sonar(void)
 {
   unsigned long pingTime;
   float distance;
@@ -261,8 +457,8 @@ float Get_Sonar(void)
   pingTime = pulseIn(PIN_SONIC_ECHO, HIGH, SONIC_TIMEOUT); // Wait HC-SR04 returning to the high level and measure out this waitting time
   if (pingTime != 0)
     distance = (float)pingTime * SOUND_VELOCITY / 2 / 10000; // calculate the distance according to the time
-  else
-    distance = MAX_DISTANCE;
+  /*else
+    distance = MAX_DISTANCE;*/
   return distance; // return the distance value
 }
 
@@ -294,28 +490,28 @@ void Track_Read(void)
 #define EMOTION_SDA     13
 #define EMOTION_SCL     14
 Freenove_ESP32_VK16K33 matrix = Freenove_ESP32_VK16K33();
-int time_before=0;      //Record each non-blocking time
-int time_count=0;       //Record the number of non-blocking times
-int time_flag=0;        //Record the blink time
+int time_before = 0;    //Record each non-blocking time
+int time_count = 0;     //Record the number of non-blocking times
+int time_flag = 0;      //Record the blink time
 
 //Initialize
 void Emotion_Setup()
 {
   matrix.init(EMOTION_ADDRESS, EMOTION_SDA, EMOTION_SCL);
-  time_before=millis();
+  time_before = millis();
 }
 
 //Turn the eyes-1
 void eyesRotate(int delay_ms)
 {
   int count = sizeof(eyeRotate1) / sizeof(eyeRotate1[0]);
-  if(millis()-time_before>=delay_ms)
+  if (millis() - time_before >= delay_ms)
   {
     matrix.showStaticArray(eyeRotate1[time_count], eyeRotate2[time_count]);
-    time_before=millis();
+    time_before = millis();
     time_count++;
-    if(time_count>=count)
-      time_count=0;
+    if (time_count >= count)
+      time_count = 0;
   }
 }
 
@@ -323,26 +519,27 @@ void eyesRotate(int delay_ms)
 void eyesBlink(int delay_ms)
 {
   int count = sizeof(eyeBlink) / sizeof(eyeBlink[0]);
-  if(millis()-time_before>=delay_ms)
-  {    
-    time_before=millis();
+  if (millis() - time_before >= delay_ms)
+  {
+    time_before = millis();
     time_count++;
-    if(time_count>=25)
+    if (time_count >= 25)
     {
-      time_count=0;
-      time_flag=1;
+      time_count = 0;
+      time_flag = 1;
     }
-    if(time_flag==0)
+    if (time_flag == 0)
       matrix.showStaticArray(eyeBlink[0], eyeBlink[0]);
-    else if(time_flag==1)
+    else if (time_flag == 1)
     {
       matrix.showStaticArray(eyeBlink[time_count], eyeBlink[time_count]);
-      if(time_count>=(count-1))
+      if (time_count >= (count - 1))
       {
-        time_flag=0;
-        time_count=0;
+        time_flag = 0;
+        time_count = 0;
       }
     }
+
   }
 }
 
@@ -350,13 +547,13 @@ void eyesBlink(int delay_ms)
 void eyesSmile(int delay_ms)
 {
   int count = sizeof(eyeSmile) / sizeof(eyeSmile[0]);
-  if(millis()-time_before>=delay_ms)
+  if (millis() - time_before >= delay_ms)
   {
     matrix.showStaticArray(eyeSmile[time_count], eyeSmile[time_count]);
-    time_before=millis();
+    time_before = millis();
     time_count++;
-    if(time_count>=count)
-      time_count=0;
+    if (time_count >= count)
+      time_count = 0;
   }
 }
 
@@ -364,13 +561,13 @@ void eyesSmile(int delay_ms)
 void eyesCry(int delay_ms)
 {
   int count = sizeof(eyeCry1) / sizeof(eyeCry1[0]);
-  if(millis()-time_before>=delay_ms)
+  if (millis() - time_before >= delay_ms)
   {
     matrix.showStaticArray(eyeCry1[time_count], eyeCry2[time_count]);
-    time_before=millis();
+    time_before = millis();
     time_count++;
-    if(time_count>=count)
-      time_count=0;
+    if (time_count >= count)
+      time_count = 0;
   }
 }
 
@@ -378,74 +575,74 @@ void eyesCry(int delay_ms)
 void eyesBlink1(int delay_ms)
 {
   int count = sizeof(eyeBlink1) / sizeof(eyeBlink1[0]);
-  if(millis()-time_before>=delay_ms)
-  {    
-    time_before=millis();
+  if (millis() - time_before >= delay_ms)
+  {
+    time_before = millis();
     time_count++;
-    if(time_count>=15)
+    if (time_count >= 15)
     {
-      time_count=0;
-      time_flag=1;
+      time_count = 0;
+      time_flag = 1;
     }
-    if(time_flag==0)
+    if (time_flag == 0)
       matrix.showStaticArray(eyeBlink1[0], eyeBlink1[0]);
-    else if(time_flag==1)
+    else if (time_flag == 1)
     {
       matrix.showStaticArray(eyeBlink1[time_count], eyeBlink1[time_count]);
-      if(time_count>=(count-1))
+      if (time_count >= (count - 1))
       {
-        time_flag=0;
-        time_count=0;
+        time_flag = 0;
+        time_count = 0;
       }
     }
   }
 }
 
 //show_arrow-6
-void showArrow(int arrow_direction,int delay_ms)
+void showArrow(int arrow_direction, int delay_ms)
 {
   if (arrow_direction == 1)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
-      matrix.showLedMatrix(arrow_up, 4, time_count-8);
-      time_before=millis();
+      matrix.showLedMatrix(arrow_up, 4, time_count - 8);
+      time_before = millis();
       time_count++;
-      if(time_count>16)
-        time_count=0;
+      if (time_count > 16)
+        time_count = 0;
     }
   }
   else if (arrow_direction == 2)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
-      matrix.showLedMatrix(arrow_dowm, 4, 8-time_count);
-      time_before=millis();
+      matrix.showLedMatrix(arrow_dowm, 4, 8 - time_count);
+      time_before = millis();
       time_count++;
-      if(time_count>16)
-        time_count=0;
+      if (time_count > 16)
+        time_count = 0;
     }
   }
   else if (arrow_direction == 3)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
-      matrix.showLedMatrix(arrow_left, 8-time_count, 0);
-      time_before=millis();
+      matrix.showLedMatrix(arrow_left, 8 - time_count, 0);
+      time_before = millis();
       time_count++;
-      if(time_count>8)
-        time_count=0;
+      if (time_count > 8)
+        time_count = 0;
     }
   }
   else if (arrow_direction == 4)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
       matrix.showLedMatrix(arrow_right, time_count, 0);
-      time_before=millis();
+      time_before = millis();
       time_count++;
-      if(time_count>8)
-        time_count=0;
+      if (time_count > 8)
+        time_count = 0;
     }
   }
   else
@@ -458,25 +655,25 @@ void wheel(int mode, int delay_ms)
   if (mode == 1)
   {
     int count = sizeof(wheel_left) / sizeof(wheel_left[0]);
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
       matrix.showStaticArray(wheel_left[time_count], wheel_left[time_count]);
-      time_before=millis();
+      time_before = millis();
       time_count++;
-      if(time_count>=count)
-        time_count=0;
+      if (time_count >= count)
+        time_count = 0;
     }
   }
   else if (mode == 2)
   {
     int count = sizeof(wheel_right) / sizeof(wheel_right[0]);
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
       matrix.showStaticArray(wheel_right[time_count], wheel_right[time_count]);
-      time_before=millis();
+      time_before = millis();
       time_count++;
-      if(time_count>=count)
-        time_count=0;
+      if (time_count >= count)
+        time_count = 0;
     }
   }
   else
@@ -484,28 +681,28 @@ void wheel(int mode, int delay_ms)
 }
 
 //Car-8
-void carMove(int mode,int delay_ms)
+void carMove(int mode, int delay_ms)
 {
   if (mode == 1)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
-      matrix.showLedMatrix(car_left, 8-time_count, 0);
-      time_before=millis();
+      matrix.showLedMatrix(car_left, 8 - time_count, 0);
+      time_before = millis();
       time_count++;
-      if(time_count>=8)
-        time_count=0;
+      if (time_count >= 8)
+        time_count = 0;
     }
   }
   else if (mode == 2)
   {
-    if(millis()-time_before>=delay_ms)
+    if (millis() - time_before >= delay_ms)
     {
       matrix.showLedMatrix(car_right, time_count, 0);
-      time_before=millis();
+      time_before = millis();
       time_count++;
-      if(time_count>=8)
-        time_count=0;
+      if (time_count >= 8)
+        time_count = 0;
     }
   }
   else
@@ -515,27 +712,54 @@ void carMove(int mode,int delay_ms)
 //expressing love-9
 void expressingLove(int delay_ms)
 {
-    int count = sizeof(I_love_you) / sizeof(I_love_you[0]);
-    if(millis()-time_before>=delay_ms)
-    {
-      matrix.showStaticArray(I_love_you[0], I_love_you[1]);
-      time_before=millis();
-      time_count++;
-      if(time_count>=count)
-        time_count=0;
-    }
+  int count = sizeof(I_love_you) / sizeof(I_love_you[0]);
+  if (millis() - time_before >= delay_ms)
+  {
+    matrix.showStaticArray(I_love_you[0], I_love_you[1]);
+    time_before = millis();
+    time_count++;
+    if (time_count >= count)
+      time_count = 0;
+  }
 }
 
 //save water-10
 void saveWater(int delay_ms)
 {
-    int count = sizeof(save_water_left) / sizeof(save_water_left[0]);
-    if(millis()-time_before>=delay_ms)
-    {
-      matrix.showStaticArray(save_water_left[time_count], save_water_right[time_count]);
-      time_before=millis();
-      time_count++;
-      if(time_count>=count)
-        time_count=0;
-    }
+  int count = sizeof(save_water_left) / sizeof(save_water_left[0]);
+  if (millis() - time_before >= delay_ms)
+  {
+    matrix.showStaticArray(save_water_left[time_count], save_water_right[time_count]);
+    time_before = millis();
+    time_count++;
+    if (time_count >= count)
+      time_count = 0;
+  }
+}
+
+//Random emoticons
+void showEmotion(int mode)
+{
+  if (mode == 0)
+    eyesRotate(100);
+  else if (mode == 1)
+    eyesBlink(100);
+  else if (mode == 2)
+    eyesSmile(100);
+  else if (mode == 3)
+    eyesCry(100);
+  else if (mode == 4)
+    eyesBlink1(100);
+  else if (mode == 5)
+    wheel(1, 150);
+  else if (mode == 6)
+    wheel(2, 150);
+  else if (mode == 7)
+    carMove(1, 150);
+  else if (mode == 8)
+    carMove(2, 150);
+  else if (mode == 9)
+    saveWater(100);
+  else if (mode == 10)
+    expressingLove(100);
 }

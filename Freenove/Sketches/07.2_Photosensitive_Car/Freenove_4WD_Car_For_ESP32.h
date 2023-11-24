@@ -1,6 +1,12 @@
 #ifndef _FREENOVE_4WD_CAR_H
 #define _FREENOVE_4WD_CAR_H
 
+#ifndef _FREENOVE_WS2812_LIB_FOR_ESP32_H
+#define _FREENOVE_WS2812_LIB_FOR_ESP32_H
+#include <Freenove_WS2812_Lib_for_ESP32.h>
+
+#endif
+
 #include <Arduino.h>
 #include <PCA9685.h>
 #include <PCF8574.h>
@@ -13,9 +19,9 @@
 void PCA9685_Close_Com_Address(void);//Close the PCA9685 public address
 
 /////////////////////PCA9685 drive area//////////////////////////////////////
-void PCA9685_Setup(void);              //servo initialization
-void Servo_1_Angle(float angle);     //Set the rotation parameters of servo 1, and the parameters are 0-180 degrees
-void Servo_2_Angle(float angle);     //Set the rotation parameters of servo 2, and the parameters are 0-180 degrees
+void PCA9685_Setup(void);               //servo initialization
+void Servo_1_Angle(float angle);        //Set the rotation parameters of servo 1, and the parameters are 0-180 degrees
+void Servo_2_Angle(float angle);        //Set the rotation parameters of servo 2, and the parameters are 0-180 degrees
 void Servo_Sweep(int servo_id, int angle_start, int angle_end, int speed);//Servo sweep function;
 void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed);//A function to control the car motor
 
@@ -24,42 +30,65 @@ void Buzzer_Setup(void);                //Buzzer initialization
 void Buzzer_Alert(int beat, int rebeat);//Buzzer alarm function
 
 ////////////////////Battery drive area/////////////////////////////////////
-int Get_Battery_Voltage_ADC(void);   //Gets the battery ADC value
-float Get_Battery_Voltage(void);     //Get the battery voltage value
+int Get_Battery_Voltage_ADC(void);      //Gets the battery ADC value
+float Get_Battery_Voltage(void);        //Get the battery voltage value
 void Set_Battery_Coefficient(float coefficient);//Set the partial pressure coefficient
 
 ////////////////////Photosensitive drive area//////////////////////////////
-void Photosensitive_Setup(void);           //Photosensitive initialization
-int Get_Photosensitive(void);              //Gets the photosensitive resistance value
+void Photosensitive_Setup(void);        //Photosensitive initialization
+int Get_Photosensitive(void);           //Gets the photosensitive resistance value
 
 /////////////////////Ultrasonic drive area/////////////////////////////////
-void Ultrasonic_Setup(void);//Ultrasonic initialization
-float Get_Sonar(void);//Obtain ultrasonic distance data
+void Ultrasonic_Setup(void);            //Ultrasonic initialization
+float Get_Sonar(void);                  //Obtain ultrasonic distance data
 
 /////////////////////PCF8574 drive area//////////////////////////////
 extern unsigned char sensorValue[4];
-void Track_Setup(void);//Trace module initialization
-void Track_Read(void);//Tracking module reading
+void Track_Setup(void);                //Trace module initialization
+void Track_Read(void);                 //Tracking module reading
 
 
-//////////////////////Emotion drive area////////////////////////////////
+//////////////////////Emotion drive area////////////////////////////////LedLights
 
 void Emotion_Setup();                            //Initialize
-void eyesRotate(int delay_ms);                   //Turn the eyes-1
-void eyesBlink(int delay_ms);                    //Wink the eyes-2
-void eyesSmile(int delay_ms);                    //Smile-3
-void eyesCry(int delay_ms);                      //Cry-4
-void eyesBlink1(int delay_ms);                   //Wink the eyes-5
-void showArrow(int arrow_direction,int delay_ms);//Arrow-6
-void wheel(int mode,int delay_ms);               //wheel-7
-void carMove(int mode,int delay_ms);             //car-8
-void expressingLove(void);                       //expressing love-9
-void saveWater(int delay_ms);                    //save water-10
+void eyesRotate(int delay_ms);                   //Turn the eyes
+void eyesBlink(int delay_ms);                    //Wink the eyes
+void eyesSmile(int delay_ms);                    //Smile
+void eyesCry(int delay_ms);                      //Cry
+void eyesBlink1(int delay_ms);                   //Wink the eyes
+void showArrow(int arrow_direction,int delay_ms);//Arrow
+void wheel(int mode,int delay_ms);               //wheel
+void carMove(int mode,int delay_ms);             //car
+void expressingLove(int delay_ms);               //expressing love
+void saveWater(int delay_ms);                    //save water
+void showEmotion(int mode);                      //Random emoticons  
+
+#define WS2812_PIN 32        //Control pins for ESP32
+extern int ws2812_task_mode; //WS2812 run mode                
+
+void WS2812_Setup(void);                                                                                   //WS2812 initialization function
+void WS2812_Show(int mode);                                                                                //WS2812 non-blocking display function
+void WS2812_Set_Color_1(int number, unsigned char color_1,unsigned char color_2,unsigned char color_3);    //Set the display color1 for WS2812
+void WS2812_Set_Color_2(int number, unsigned char color_1,unsigned char color_2,unsigned char color_3);    //Set the display color2 for WS2812
+void WS2812_SetMode(int mode);                                                                             //WS2812 set mode
 
 
+void LineTracking(void);
+void ObstacleAvoidance(void);
+int ObstacleAhead(void);
+void SuitableDistance(void);
+int ObstacleLocation(void);
+void movement(int turn);
+void MoveAroundObstacle(void);
+void MoveForward(void);
+void MoveNearObstacle(void);
+void MoveFarObstacle(void);
+void ReturnTrack(void);
+void ForwardToZero(void);
+void TurnToTrack(void);
+void ForwardToTrack(void);
 
-
-
+void LightTracing(void);
 
 
 #endif
