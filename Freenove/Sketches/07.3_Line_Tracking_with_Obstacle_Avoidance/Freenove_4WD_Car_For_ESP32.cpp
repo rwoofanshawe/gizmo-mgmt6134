@@ -294,8 +294,12 @@ void Servo_Sweep(int servo_id, int angle_start, int angle_end, int speed)
 //A function to control the car motor
 void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
 {
+  //m1_speed = MOTOR_1_DIRECTION * constrain(m1_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
+  //m2_speed = MOTOR_2_DIRECTION * constrain(m2_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
+  
   m1_speed = MOTOR_1_DIRECTION * constrain(m1_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
   m2_speed = MOTOR_2_DIRECTION * constrain(m2_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
+
   m3_speed = MOTOR_3_DIRECTION * constrain(m3_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
   m4_speed = MOTOR_4_DIRECTION * constrain(m4_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
 
@@ -447,18 +451,34 @@ void Ultrasonic_Setup(void)
 }
 
 //Obtain ultrasonic distance data
-float Get_Sonar(void)
+float Get_Sonar(void) 
 {
   unsigned long pingTime;
   float distance;
+  /*
   digitalWrite(PIN_SONIC_TRIG, HIGH); // make trigPin output high level lasting for 10μs to triger HC_SR04,
   delayMicroseconds(10);
   digitalWrite(PIN_SONIC_TRIG, LOW);
   pingTime = pulseIn(PIN_SONIC_ECHO, HIGH, SONIC_TIMEOUT); // Wait HC-SR04 returning to the high level and measure out this waitting time
   if (pingTime != 0)
     distance = (float)pingTime * SOUND_VELOCITY / 2 / 10000; // calculate the distance according to the time
-  /*else
-    distance = MAX_DISTANCE;*/
+  else
+    //distance = MAX_DISTANCE;
+  */
+  
+  // Send a pulse to the ultrasonic sensor
+  digitalWrite(PIN_SONIC_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_SONIC_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PIN_SONIC_TRIG, LOW);
+
+  // Measure the pingTime of the echo pulse
+  pingTime = pulseIn(PIN_SONIC_ECHO, HIGH);
+
+  // Calculate the distance in centimeters
+  distance = pingTime * 0.034 / 2;
+
   return distance; // return the distance value
 }
 

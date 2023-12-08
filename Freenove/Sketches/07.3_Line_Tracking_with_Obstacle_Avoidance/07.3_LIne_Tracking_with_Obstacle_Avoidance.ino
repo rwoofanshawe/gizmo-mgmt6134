@@ -40,32 +40,36 @@ int Lcounter=0;               // counter for light tracing photosensitive initia
 //Calibration
 
 //turn line tracking
-int SPEED_LV2=1100;               //left and right from line tracking; decrease if car is wiggling at the track
-int SPEED_LV3=1100;               //increase if turning makes it difficult
+int SPEED_LV2=1000;               //left and right from line tracking; decrease if car is wiggling at the track
+int SPEED_LV3=1000;               //increase if turning makes it difficult
 //forard line tracking
-int SPEED_LV1=710;                //forward from line tracking; decrease if car cannot turn to curve
+int SPEED_LV1=620;                //forward from line tracking; decrease if car cannot turn to curve
 //ahead
-int ahead=14;             //distance detecting obstacle from line tracking
+int ahead=10;             //distance detecting obstacle from line tracking
 //suitabledistance
-float sdistance=4.5;                //distance from osbatcle before moving around
+float sdistance=8.5;                //distance from osbatcle before moving around
 // min max around obstacle
-float Omin=sdistance-2;                                        // near distance car will move around the obstacle
-float Omax=ahead-2;                                        // far distance car will move around the obstacle
-//forward speed suitable distance and forward to zero
-int SPEED_LV4=700;
+float Omin=7;                                        // near distance car will move around the obstacle
+float Omid=17;
+float Omax=17;                                        // far distance car will move around the obstacle
+//forward speed suitable distance
+int SPEED_LV4=660;
 //obstacleavoidance
-int SDdelay=120;                  //time for car to turn once obstacle is detected
+int SDdelay=50;                  //time for car to turn once obstacle is detected
 //turnnearfar
-int NFdelay=22;                    //time for car to turn near or far from obstacle when it moves around the obstacle
+int NFdelay=80;                    //time for car to added forward from obstacle when it moves around the obstacle
 //speed turn around the osbtacle
-int SPEED_LV5=1400;
+int SPEED_LV5=1150;
 // speed forward around obstacle
-int SPEED_LV6=820;
+int SPEED_LV6=700;
 //reterntotrack
-int RTdelay=20;                  //time for car to return to track
+int RTdelay=10;                  //time for car to return to track
 //speed light tracing and return to track
 int SPEED_LV7=800;                //forward and backward speed
-int SPEED_LV8=1000;               //turn speed
+int SPEED_LV8=1100;               //turn speed
+// speed return to track
+int SPEED_LV9=630;                //forward 
+int SPEED_LVL10=1000;             // turn 
 
 void setup()
 {
@@ -148,7 +152,7 @@ void LightTracing()
 int left=photosensitive_init_value-1400;          // minimum range to move forward and if its lower than this, car turns left
 int frontleft=photosensitive_init_value-600;      // maximum range to move forward and if its higher than this, car stops (minimum range to stop)
 int frontright=photosensitive_init_value+600;     // minimum range to move backward and if its lower than this, car stops (maximum range to stop)
-int right=photosensitive_init_value+1400;         // maximum range to move backward and if its higher than this, car turns right
+int right=photosensitive_init_value+1200;         // maximum range to move backward and if its higher than this, car turns right
 
 initial = value;
 
@@ -253,8 +257,8 @@ void movement(int turn)
   leftmotor[3]=-SPEED_LV5; 
   rightmotor[3]=SPEED_LV5;
   turndistance[3]=((Omax-Omin)/2);                 
-  RTleftmotor[3]=-SPEED_LV8;
-  RTrightmotor[3]=SPEED_LV8;
+  RTleftmotor[3]=-SPEED_LVL10;
+  RTrightmotor[3]=SPEED_LVL10;
 
   //1 left direction
   leftmotor[1]=leftmotor[3];
@@ -270,7 +274,7 @@ void movement(int turn)
   //2 right direction
   leftmotor[2]=rightmotor[3];
   rightmotor[2]=leftmotor[3];
-  angle[2]=176;   // scanner on the left
+  angle[2]=180;   // scanner on the left
   turndistance[2]=turndistance[3]+1;
   sensorcondition[2]=6;
   RTleftmotor[2]=RTrightmotor[3];
@@ -317,9 +321,13 @@ void ObstacleAvoidance(void)
 
   Servo_1_Angle(angle[0]);        // scanner moves to the right degree
 
+  Buzzer_Alert(1, 1);
+ 
   SDcounter=0;
   while (true) {
-    if (SDcounter < SDdelay){
+    float sonarValue = Get_Sonar();
+
+    if (SDcounter < SDdelay) {
       WS2812_Set_Color_1(4095, 0, 0, 100);
       WS2812_Show(3);
       showArrow(faremotion[0], 100);
@@ -330,10 +338,21 @@ void ObstacleAvoidance(void)
       WS2812_Show(1);
       eyesBlink1(100);
       Motor_Move(0, 0, 0, 0);                           //Stop
+      Buzzer_Alert(1, 1);
       break; // Exit the loop when sonarValue is 20 or higher
     }
   }
-
+/*
+        WS2812_Show(2);
+        showArrow(1, 100);
+        Motor_Move(SPEED_LV6, SPEED_LV6, SPEED_LV6, SPEED_LV6);
+        delay(SDdelay+10);
+        WS2812_Set_Color_1(4095, 100, 0, 0);
+        WS2812_Show(1);
+        eyesSmile(100);
+        Motor_Move(0, 0, 0, 0);                           //Stop
+        Buzzer_Alert(1, 1);
+*/
   MoveAroundObstacle();
 }
 
@@ -365,6 +384,7 @@ void SuitableDistance(void)
       WS2812_Show(1);
       eyesBlink1(100);
       Motor_Move(0, 0, 0, 0);                           //Stop
+      Buzzer_Alert(3, 1);
       break; // This will exit the loop
     }
   }
@@ -389,22 +409,9 @@ void MoveAroundObstacle(void)
 {
   while (true) {
     Track_Read();
-    if (sensorValue[3] == 0) {
+    if (!(sensorValue[3] == 7)) {
       MoveForward();
-      Track_Read();
-      if (sensorValue[3] == 0) {
-        float sonarValue = Get_Sonar();
-
-        if (sonarValue > turndistance[0]) {
-          MoveNearObstacle();
-        } else {
-          MoveFarObstacle();
-        }
-      } else {
-        ReturnTrack();
-        break; // Exit the loop when sensorValue[3] is not equal to 0
-      }
-    } else {
+   } else {
       ReturnTrack();
       break; // Exit the loop when sensorValue[3] is not equal to 0
     }
@@ -412,15 +419,12 @@ void MoveAroundObstacle(void)
 }
 
 void MoveForward(void)
-{
-  Serial.print("Min: " + String(sdistance-3) + "\n");
-  Serial.print("Max: " + String(ahead-3) + "\n");
+{/*
   while (true) {   
     Track_Read();
     if (!(sensorValue[3] == 7)) {
       float sonarValue = Get_Sonar();
-      Serial.print("Forward: " + String(sonarValue) + "\n");
-      if ((sonarValue > sdistance-3) && (sonarValue < ahead-3)) {
+      if ((sonarValue > Omin) && (sonarValue < Omax)) {
         WS2812_Set_Color_1(4095, 0, 100, 0);
         WS2812_Show(2);
         showArrow(1, 100);
@@ -441,6 +445,52 @@ void MoveForward(void)
       break; // Exit the loop when sonarValue is 7 or higher
     }
   }
+  
+        WS2812_Set_Color_1(4095, 0, 100, 0);
+        WS2812_Show(2);
+        showArrow(1, 100);
+        Motor_Move(SPEED_LV6, SPEED_LV6, SPEED_LV6, SPEED_LV6);
+        delay(NFdelay);
+        */
+
+  NFcounter=0;
+  while (true){
+    Track_Read();
+    if (!(sensorValue[3] == 7)) {
+      if (NFcounter < NFdelay) {
+        WS2812_Set_Color_1(4095, 0, 100, 0);
+        WS2812_Show(2);
+        showArrow(1, 100);
+        Motor_Move(SPEED_LV6, SPEED_LV6, SPEED_LV6, SPEED_LV6);
+        NFcounter=NFcounter+1;
+      } else {
+        WS2812_Set_Color_1(4095, 100, 0, 0);
+        WS2812_Show(1);
+        eyesSmile(100);
+        Motor_Move(0, 0, 0, 0);                           //Stop
+        Buzzer_Alert(1, 1);
+        break;
+      }
+    } else {
+      WS2812_Set_Color_1(4095, 100, 0, 0);
+      WS2812_Show(1);
+      eyesSmile(100);
+      Motor_Move(0, 0, 0, 0);                           //Stop
+      Buzzer_Alert(1, 1);
+      break;
+    }
+  }
+
+  Track_Read();
+  if (sensorValue[3] == 0) {
+    float sonarValue = Get_Sonar();
+
+    if (sonarValue > Omid) {
+      MoveNearObstacle();
+    } else {
+      MoveFarObstacle();
+    }
+  }
 }
 
 void MoveNearObstacle(void)
@@ -449,7 +499,8 @@ void MoveNearObstacle(void)
   while (true) {   
     Track_Read();
     if (!(sensorValue[3] == 7)) {
-      if (NFcounter < NFdelay){
+      float sonarValue = Get_Sonar();
+      if (sonarValue > Omid){
         WS2812_Set_Color_1(4095, 0, 0, 100);
         WS2812_Show(3);
         showArrow(nearemotion[0], 100);
@@ -479,7 +530,8 @@ void MoveFarObstacle(void)
   while (true) {   
     Track_Read();
     if (!(sensorValue[3] == 7)) {
-      if (NFcounter < NFdelay){
+      float sonarValue = Get_Sonar();
+      if (sonarValue < Omid){
         WS2812_Set_Color_1(4095, 0, 0, 100);
         WS2812_Show(3);
         showArrow(faremotion[0], 100);
@@ -508,6 +560,8 @@ void ReturnTrack(void)
   Servo_1_Angle(90);
 
   ForwardToZero();
+  TurnToTrack();
+  /*
   counter=0;
   while (true) {
     if (counter < RTdelay) {
@@ -524,7 +578,7 @@ void ReturnTrack(void)
       break;
     }
   }
-/*
+
   SPEED_LV1=800;
   SPEED_LV2=1000;
 */
@@ -538,7 +592,7 @@ void ForwardToZero(void)
       WS2812_Set_Color_1(4095, 0, 100, 0);
       WS2812_Show(2);
       showArrow(1, 100);
-      Motor_Move(SPEED_LV7, SPEED_LV7, SPEED_LV7, SPEED_LV7);
+      Motor_Move(SPEED_LV9, SPEED_LV9, SPEED_LV9, SPEED_LV9);
     } else {
       WS2812_Set_Color_1(4095, 100, 0, 0);
       WS2812_Show(1);
@@ -566,7 +620,7 @@ void TurnToTrack(void)
       break; // Exit the loop when sonarValue is not equal to 7 
     }
   }  
-  while (true){
+ /* while (true){
     Track_Read();
     if (!(sensorValue[3] == 7)) {
       WS2812_Set_Color_1(4095, 0, 0, 100);
@@ -580,7 +634,7 @@ void TurnToTrack(void)
       Motor_Move(0, 0, 0, 0);                           //Stop
       break; // Exit the loop when sonarValue is not equal to 7 
     }
-  }        
+  }   */     
 }
 
 void ForwardToTrack(void)
@@ -599,7 +653,7 @@ void ForwardToTrack(void)
           WS2812_Set_Color_1(4095, 0, 0, 100);
           WS2812_Show(2);
           showArrow(1, 100);
-          Motor_Move(SPEED_LV7, SPEED_LV7, SPEED_LV7, SPEED_LV7);
+          Motor_Move(SPEED_LV4, SPEED_LV4, SPEED_LV4, SPEED_LV4);
         } else {
           WS2812_Set_Color_1(4095, 100, 0, 0);
           WS2812_Show(1);
